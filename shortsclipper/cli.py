@@ -32,6 +32,8 @@ def main(argv=None):
     ap.add_argument("--whisper-model", default=config.DEFAULT_WHISPER)
     ap.add_argument("--output", default=None, help="output mp4 path (default ~/Downloads)")
     ap.add_argument("--force", action="store_true", help="re-render even if output exists")
+    ap.add_argument("--keep-ass", action="store_true",
+                    help="keep the generated .ass caption file next to the output")
     ap.add_argument("--no-face-track", action="store_true",
                     help="disable the face-anchored crop (plain center crop)")
     ap.add_argument("--verbose", action="store_true")
@@ -52,7 +54,7 @@ def main(argv=None):
             caption_style=args.caption_style, caption_script=args.caption_script,
             output_path=args.output, whisper_model=args.whisper_model,
             force=args.force, progress=lambda m: log.info("%s", m),
-            face_track=not args.no_face_track,
+            keep_ass=args.keep_ass, face_track=not args.no_face_track,
         )
     except (RuntimeError, KeyboardInterrupt) as e:
         log.error("%s", e)

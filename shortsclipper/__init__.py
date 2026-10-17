@@ -31,4 +31,4 @@ if _SYSTEM_CA.exists():
     os.environ.setdefault("SSL_CERT_FILE", str(_SYSTEM_CA))
     os.environ.setdefault("REQUESTS_CA_BUNDLE", str(_SYSTEM_CA))
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"

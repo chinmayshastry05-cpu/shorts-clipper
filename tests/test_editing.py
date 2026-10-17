@@ -77,3 +77,50 @@ def test_detect_face_returns_none_without_faces(tmp_path):
 def test_detect_face_unopenable_returns_none(tmp_path):
     pytest.importorskip("cv2")
     assert detect_face_center_x(tmp_path / "does-not-exist.mp4") is None
+
+
+# ---- face tracking over time (v0.2.1) ------------------------------------
+
+from shortsclipper.editing import (_is_two_shot, _runs_to_ranges,
+                                   _split_anchor_runs)
+
+
+def test_split_anchor_runs_on_cut():
+    # Speaker on the left for the first half, on the right after the cut.
+    samples = [(i * 30 / 16 + 30 / 32, 0.25 if i < 8 else 0.75)
+               for i in range(16)]
+    runs = _split_anchor_runs(samples)
+    assert len(runs) == 2
+    ranges = _runs_to_ranges(runs, 30.0)
+    assert len(ranges) == 2
+    assert ranges[0][0] == 0.0 and ranges[1][1] == 30.0
+    assert ranges[0][2] == 0.25 and ranges[1][2] == 0.75
+    assert ranges[0][1] == ranges[1][0]  # contiguous coverage
+
+
+def test_stable_speaker_single_run():
+    samples = [(i * 2.0, 0.5 + (0.01 if i % 2 else -0.01)) for i in range(15)]
+    ranges = _runs_to_ranges(_split_anchor_runs(samples), 30.0)
+    assert len(ranges) == 1
+    t0, t1, x = ranges[0]
+    assert (t0, t1) == (0.0, 30.0) and abs(x - 0.5) < 0.02
+
+
+def test_short_run_merges_into_neighbor():
+    # A 1-sample glance at x=0.9 inside a stable 0.3 track must not split
+    # the render into a sub-second run.
+    samples = [(i * 0.5, 0.3) for i in range(16)] + [(8.25, 0.9)] + \
+              [(i * 0.5, 0.3) for i in range(17, 40)]
+    ranges = _runs_to_ranges(_split_anchor_runs(samples), 20.0, min_run=1.5)
+    assert len(ranges) == 1
+    assert ranges[0] == (0.0, 20.0, 0.3)
+
+
+def test_two_shot_detection():
+    # Two comparable faces, far apart horizontally -> two-shot.
+    faces = [(100, 100, 200, 200), (1500, 120, 180, 180)]
+    assert _is_two_shot(faces, 1920)
+    # One dominant face + a small background face -> not two-shot.
+    assert not _is_two_shot([(100, 100, 200, 200), (1500, 120, 60, 60)], 1920)
+    # Two faces but nearly overlapping (same person double-detect) -> no.
+    assert not _is_two_shot([(100, 100, 200, 200), (150, 110, 190, 190)], 1920)
