@@ -1,6 +1,6 @@
 """Tests: auto-cut window selection (speech-density sliding window)."""
 
-from shortscut.selection import pick_window
+from shortsclipper.selection import pick_window
 
 
 def _segs(spec):

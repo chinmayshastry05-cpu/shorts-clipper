@@ -59,7 +59,7 @@ def segment_words(segment_path, source, start, end,
         log.info("cache HIT — segment words (%s)", cache.name)
         return json.loads(cache.read_text(encoding="utf-8"))
 
-    workdir = Path(tempfile.mkdtemp(prefix="shortscut_segw_"))
+    workdir = Path(tempfile.mkdtemp(prefix="shortsclipper_segw_"))
     try:
         wav = extract_wav16k(segment_path, workdir / "seg.wav")
         _, words, _ = whisper_engine.transcribe(wav, whisper_model, word_timestamps=True)

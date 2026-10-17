@@ -7,7 +7,7 @@ _VERBOSE = False
 
 
 def get_logger(name):
-    logger = logging.getLogger(f"shortscut.{name}")
+    logger = logging.getLogger(f"shortsclipper.{name}")
     if not logger.handlers:
         handler = logging.StreamHandler(sys.stderr)
         handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s",
@@ -22,5 +22,5 @@ def set_verbose(verbose):
     global _VERBOSE
     _VERBOSE = bool(verbose)
     for name in list(logging.root.manager.loggerDict):
-        if name.startswith("shortscut."):
+        if name.startswith("shortsclipper."):
             logging.getLogger(name).setLevel(logging.DEBUG if verbose else logging.INFO)
