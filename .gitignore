@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+.venv*/
+.cache/
+output/
+*.log
+docs/verification/*.log
+!docs/verification/*.log
+*.AppImage
+AppDir/
+dist/
+build/
+.pytest_cache/
+*.ass

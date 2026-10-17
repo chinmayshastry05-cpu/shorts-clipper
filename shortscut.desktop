@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ShortCut
+Comment=Auto-cut vertical shorts with captions, offline
+Exec=shortscut
+Icon=shortscut
+Categories=AudioVideo;Video;
+Terminal=false
+MimeType=video/mp4;video/x-matroska;video/webm;video/quicktime;
