@@ -1,4 +1,4 @@
-"""Generate the ShortCut icon (original artwork, drawn with Pillow).
+"""Generate the Shorts Clipper icon (original artwork, drawn with Pillow).
 
 A dark rounded square, a white 9:16 phone outline, a play triangle, and a
 caption bar — the app in one glyph. No third-party assets.
@@ -23,7 +23,7 @@ def main():
     # Caption bar (the draggable caption)
     d.rounded_rectangle([102, 168, 154, 184], radius=6, fill=(255, 255, 255, 255))
     d.rounded_rectangle([108, 190, 148, 198], radius=4, fill=(136, 136, 136, 255))
-    out = Path(__file__).resolve().parent / "shortscut.png"
+    out = Path(__file__).resolve().parent / "shortsclipper.png"
     img.save(out)
     print(f"wrote {out}")
 

@@ -8,11 +8,11 @@ repo or the AppImage), transcription runs on CPU, captions use DejaVu Sans
 import os
 from pathlib import Path
 
-# Project root = the folder containing the `shortscut` package.
+# Project root = the folder containing the `shortsclipper` package.
 ROOT = Path(__file__).resolve().parent.parent
 
 # Cache layout (never re-download / re-transcribe what we already have).
-CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "shortscut"
+CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "shortsclipper"
 TRANSCRIPT_CACHE = CACHE_DIR / "transcripts"      # transcript_<id>.json
 SEGMENT_CACHE = CACHE_DIR / "segments"            # <id>_<start>-<end>.mp4
 SEGWORDS_CACHE = CACHE_DIR / "segwords"           # <id>_<start>-<end>.json

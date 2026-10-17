@@ -37,7 +37,7 @@ def _first_caption_line(words, style):
 class App:
     def __init__(self, root):
         self.root = root
-        root.title("ShortCut — vertical shorts, offline")
+        root.title("Shorts Clipper — vertical shorts, offline")
         root.geometry("880x700")
         root.resizable(False, False)
 
@@ -158,7 +158,7 @@ class App:
             title="Save short as",
             defaultextension=".mp4",
             initialdir=str(config.DEFAULT_OUTPUT),
-            initialfile=f"shortscut_{self.duration.get()}s.mp4",
+            initialfile=f"shortsclipper_{self.duration.get()}s.mp4",
             filetypes=[("MP4 video", "*.mp4")])
         if not out:
             return
@@ -229,6 +229,9 @@ class App:
             "Drag the caption, then Download short.")
         self._log(f"window {prep['start']:.1f}-{prep['end']:.1f}s, "
                   f"{prep['nwords']} words, via {prep['method']}")
+        fx = prep.get("face_x")
+        if fx is not None:
+            self._log(f"speaker found at {fx * 100:.0f}% of frame width — crop anchored on them")
 
     def _after_export(self, meta):
         self._set_status(f"Saved: {meta['output']}")
@@ -241,7 +244,7 @@ class App:
         from PIL import Image, ImageTk
         img = Image.open(prep["frame"]).convert("RGB")
         w, h = img.size
-        x, y, cw, ch = crop_box(w, h)
+        x, y, cw, ch = crop_box(w, h, face_x=prep.get("face_x"))
         img = img.crop((x, y, x + cw, y + ch)).resize((PREVIEW_W, PREVIEW_H))
         self._photo = ImageTk.PhotoImage(img)
         self.canvas.delete("all")

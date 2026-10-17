@@ -17,8 +17,10 @@ from .util import extract_frame, ffprobe_duration, slugify, source_key
 log = get_logger("pipeline")
 
 
-def prepare(source, duration, whisper_model=config.DEFAULT_WHISPER, progress=None):
-    """Transcript + window + segment + words. Returns a dict the GUI previews.
+def prepare(source, duration, whisper_model=config.DEFAULT_WHISPER, progress=None,
+            face_track=True):
+    """Transcript + window + segment + words + face anchor. Returns a dict the
+    GUI previews.
 
     progress: optional callable(msg) for status updates.
     """
@@ -45,6 +47,14 @@ def prepare(source, duration, whisper_model=config.DEFAULT_WHISPER, progress=Non
         full = download.get_full_video(source)
         seg = download.slice_from_local(full, source, start, end)
 
+    if face_track:
+        if progress:
+            progress("Finding the speaker…")
+        face_x = editing.detect_face_center_x(seg)
+        log.info("face anchor: %s", f"{face_x:.3f}" if face_x is not None else "none — center crop")
+    else:
+        face_x = None
+
     if progress:
         progress("Timing captions…")
     # Fallback for the caption pass: the transcript's phrase segments in this
@@ -55,13 +65,13 @@ def prepare(source, duration, whisper_model=config.DEFAULT_WHISPER, progress=Non
     whisper_engine.free_model()
 
     # Preview frame: middle of the segment.
-    frame = Path(tempfile.mkdtemp(prefix="shortscut_preview_")) / "frame.jpg"
+    frame = Path(tempfile.mkdtemp(prefix="shortsclipper_preview_")) / "frame.jpg"
     extract_frame(seg, (end - start) / 2.0, frame)
     return {
         "source": source, "key": source_key(source), "language": language,
         "method": method, "start": start, "end": end, "words": words,
         "nwords": nwords, "segment": str(seg), "frame": str(frame),
-        "duration": end - start,
+        "duration": end - start, "face_x": face_x,
     }
 
 
@@ -72,7 +82,7 @@ def render_short(prep, caption_y=config.DEFAULT_CAPTION_Y,
     """Render a prepared short with the given caption position. Returns metadata."""
     out = Path(output_path) if output_path else None
     if out is None:
-        out = config.DEFAULT_OUTPUT / f"shortscut_{prep['key']}_{int(prep['start'])}-{int(prep['end'])}.mp4"
+        out = config.DEFAULT_OUTPUT / f"shortsclipper_{prep['key']}_{int(prep['start'])}-{int(prep['end'])}.mp4"
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists() and not force:
         log.info("output already exists (%s) — reusing", out.name)
@@ -80,7 +90,8 @@ def render_short(prep, caption_y=config.DEFAULT_CAPTION_Y,
         if progress:
             progress("Burning captions + rendering…")
         seg_dur = ffprobe_duration(prep["segment"])
-        out_w, out_h, vf = editing.vertical_filters(prep["segment"], vertical=True)
+        out_w, out_h, vf = editing.vertical_filters(
+            prep["segment"], vertical=True, face_x=prep.get("face_x"))
         ass_path = out.with_suffix(".ass")
         n_events = captions.write_ass(prep["words"], seg_dur, out_w, out_h,
                                       ass_path, caption_style, caption_script,
@@ -101,9 +112,9 @@ def make_short(source, duration=30, caption_y=config.DEFAULT_CAPTION_Y,
                caption_style=config.DEFAULT_CAPTION_STYLE,
                caption_script=config.DEFAULT_CAPTION_SCRIPT,
                output_path=None, whisper_model=config.DEFAULT_WHISPER,
-               force=False, progress=None, keep_ass=False):
+               force=False, progress=None, keep_ass=False, face_track=True):
     """One-shot: prepare + render. Returns the render metadata dict."""
-    prep = prepare(source, duration, whisper_model, progress)
+    prep = prepare(source, duration, whisper_model, progress, face_track=face_track)
     meta = render_short(prep, caption_y, caption_style, caption_script,
                         output_path, force, progress, keep_ass=keep_ass)
     meta["caption_events"] = None  # counted at write time; see log

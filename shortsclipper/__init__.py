@@ -1,4 +1,4 @@
-"""ShortCut Linux — original Linux desktop app for auto-cutting vertical shorts.
+"""Shorts Clipper — original Linux desktop app for auto-cutting vertical shorts.
 
 Paste a video URL or drop a local video, pick 30/45/60 seconds, drag the
 caption on a phone preview, download the finished 9:16 short. Everything
@@ -8,7 +8,7 @@ runs locally (ffmpeg + faster-whisper + yt-dlp); no cloud APIs.
 import os
 from pathlib import Path
 
-# --- Environment fixes (run on ANY `import shortscut...`, before anything
+# --- Environment fixes (run on ANY `import shortsclipper...`, before anything
 # that touches the network). They only make TLS/proxy handling match the
 # machine's own system configuration; verification is never disabled. ---
 
@@ -31,4 +31,4 @@ if _SYSTEM_CA.exists():
     os.environ.setdefault("SSL_CERT_FILE", str(_SYSTEM_CA))
     os.environ.setdefault("REQUESTS_CA_BUNDLE", str(_SYSTEM_CA))
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

@@ -1,4 +1,4 @@
-# ShortCut Linux — runtime dependencies (all free / open source)
+# Shorts Clipper — runtime dependencies (all free / open source)
 faster-whisper>=1.0.0        # local speech-to-text (CTranslate2, CPU)
 av==14.0.0                   # PyAV for faster-whisper audio decode; pinned exact
                              # because av 14.4.0 has no usable wheel for the
@@ -10,3 +10,4 @@ yt-dlp>=2024.0.0             # video/audio download (generic URLs + YouTube)
 youtube-transcript-api>=1.0.0  # YouTube captions without downloading video
 Pillow>=10.0.0                # preview frame handling in the GUI
 tkinterdnd2>=0.3.0            # drag-and-drop of local files into the GUI (optional)
+opencv-python-headless>=4.8,<5  # face detection for the face-anchored crop (headless: no GUI libs); <5: 5.x dropped cv2.CascadeClassifier

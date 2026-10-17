@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""ShortCut Linux — headless CLI (used for testing + scripting).
+"""Shorts Clipper — headless CLI (used for testing + scripting).
 
-The GUI is the primary interface (`python -m shortscut`). This CLI runs the
+The GUI is the primary interface (`python -m shortsclipper`). This CLI runs the
 same pipeline without a display: transcript -> auto-cut -> captions -> render.
 """
 
@@ -18,8 +18,8 @@ log = get_logger("cli")
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
-        prog="shortscut",
-        description="ShortCut Linux — auto-cut a 30/45/60s vertical short with captions")
+        prog="shortsclipper",
+        description="Shorts Clipper — auto-cut a 30/45/60s vertical short with captions")
     ap.add_argument("--input", required=True, help="Video URL or local video path")
     ap.add_argument("--duration", type=int, choices=config.DURATIONS, default=30,
                     help="short length in seconds (default 30)")
@@ -32,6 +32,8 @@ def main(argv=None):
     ap.add_argument("--whisper-model", default=config.DEFAULT_WHISPER)
     ap.add_argument("--output", default=None, help="output mp4 path (default ~/Downloads)")
     ap.add_argument("--force", action="store_true", help="re-render even if output exists")
+    ap.add_argument("--no-face-track", action="store_true",
+                    help="disable the face-anchored crop (plain center crop)")
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args(argv)
 
@@ -50,6 +52,7 @@ def main(argv=None):
             caption_style=args.caption_style, caption_script=args.caption_script,
             output_path=args.output, whisper_model=args.whisper_model,
             force=args.force, progress=lambda m: log.info("%s", m),
+            face_track=not args.no_face_track,
         )
     except (RuntimeError, KeyboardInterrupt) as e:
         log.error("%s", e)

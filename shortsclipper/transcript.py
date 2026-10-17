@@ -96,7 +96,7 @@ def _youtube_captions(video_id):
 
 def _audio_whisper(source, whisper_model):
     """Audio-only path: download just the audio track (or use local file), transcribe."""
-    workdir = Path(tempfile.mkdtemp(prefix="shortscut_audio_"))
+    workdir = Path(tempfile.mkdtemp(prefix="shortsclipper_audio_"))
     try:
         if is_url(source):
             log.info("no captions — downloading AUDIO ONLY (not the video) with yt-dlp")

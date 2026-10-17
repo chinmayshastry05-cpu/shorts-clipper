@@ -1,10 +1,10 @@
 #!/bin/sh
-# Build the ShortCut Linux AppImage.
+# Build the Shorts Clipper AppImage.
 #
 # Layout inside the AppDir:
 #   usr/python/            standalone CPython 3.12 (relocatable, uv-managed)
 #   usr/lib/site-packages/ pip deps (faster-whisper, yt-dlp, Pillow, ...)
-#   usr/lib/shortscut/     the app package
+#   usr/lib/shortsclipper/     the app package
 #   usr/bin/ffmpeg, ffprobe (static builds, GPL — see README)
 #   usr/share/fonts/       DejaVuSans-Bold (bundled so captions always render)
 #   AppRun                 launcher (GUI by default, --cli for headless)
@@ -15,9 +15,9 @@ set -eu
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 # Durable scratch under ~/workspace/tmp (NOT /tmp — this VM's /tmp is
 # ephemeral and a restart mid-build wipes it). Override with env if needed.
-BUILD="${SHORTSCUT_BUILD_DIR:-$HOME/workspace/tmp/shortscut-appimage-build}"
+BUILD="${SHORTSCLIPPER_BUILD_DIR:-$HOME/workspace/tmp/shortsclipper-appimage-build}"
 APPDIR="$BUILD/AppDir"
-OUT="${1:-$ROOT/ShortCut-Linux-x86_64.AppImage}"
+OUT="${1:-$ROOT/ShortsClipper-x86_64.AppImage}"
 
 echo "== build dir: $BUILD"
 rm -rf "$BUILD"
@@ -55,8 +55,8 @@ echo "== installing pip deps"
     --only-binary :all: -r "$ROOT/requirements.txt" -q
 
 # ---- app code ----
-cp -r "$ROOT/shortscut" "$APPDIR/usr/lib/shortscut"
-find "$APPDIR/usr/lib/shortscut" -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
+cp -r "$ROOT/shortsclipper" "$APPDIR/usr/lib/shortsclipper"
+find "$APPDIR/usr/lib/shortsclipper" -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
 
 # ---- static ffmpeg / ffprobe (johnvansickle.com, GPL) ----
 echo "== fetching static ffmpeg"
@@ -91,16 +91,16 @@ cat > "$APPDIR/usr/share/fontconfig/fonts.conf.template" <<'EOF'
 EOF
 
 # ---- desktop file + icon ----
-cp "$ROOT/shortscut.desktop" "$APPDIR/"
+cp "$ROOT/shortsclipper.desktop" "$APPDIR/"
 "$UV" run --python "$PYBIN" --with Pillow "$ROOT/assets/make_icon.py" >/dev/null 2>&1 \
     || (cd "$ROOT" && "$PYBIN" assets/make_icon.py)
-cp "$ROOT/assets/shortscut.png" "$APPDIR/shortscut.png"
-ln -sf shortscut.png "$APPDIR/.DirIcon"
+cp "$ROOT/assets/shortsclipper.png" "$APPDIR/shortsclipper.png"
+ln -sf shortsclipper.png "$APPDIR/.DirIcon"
 
 # ---- AppRun ----
 cat > "$APPDIR/AppRun" <<EOF
 #!/bin/sh
-# ShortCut launcher: GUI by default, --cli for headless runs.
+# Shorts Clipper launcher: GUI by default, --cli for headless runs.
 set -e
 HERE="\$(dirname "\$(readlink -f "\$0")")"
 export PATH="\$HERE/usr/bin:\$PATH"
@@ -110,14 +110,14 @@ fi
 if [ -z "\${REQUESTS_CA_BUNDLE:-}" ] && [ -f /etc/ssl/certs/ca-certificates.crt ]; then
   export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 fi
-FC_TMP="\$HOME/.cache/shortscut/fonts.conf"
+FC_TMP="\$HOME/.cache/shortsclipper/fonts.conf"
 mkdir -p "\$(dirname "\$FC_TMP")"
 sed "s|@HERE@|\$HERE|g" "\$HERE/usr/share/fontconfig/fonts.conf.template" > "\$FC_TMP"
 export FONTCONFIG_FILE="\$FC_TMP"
 export PYTHONPATH="\$HERE/usr/lib/site-packages:\$HERE/usr/lib"
 export PYTHONNOUSERSITE=1
 PY="\$HERE/$PYREL"
-if [ "\${1:-}" = "--cli" ]; then shift; exec "\$PY" -m shortscut.cli "\$@"; else exec "\$PY" -m shortscut "\$@"; fi
+if [ "\${1:-}" = "--cli" ]; then shift; exec "\$PY" -m shortsclipper.cli "\$@"; else exec "\$PY" -m shortsclipper "\$@"; fi
 EOF
 chmod +x "$APPDIR/AppRun"
 

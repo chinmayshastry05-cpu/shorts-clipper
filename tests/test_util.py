@@ -1,6 +1,6 @@
 """Tests: URL / video-id / cache-key helpers."""
 
-from shortscut.util import is_url, source_key, youtube_id
+from shortsclipper.util import is_url, source_key, youtube_id
 
 
 def test_youtube_id():

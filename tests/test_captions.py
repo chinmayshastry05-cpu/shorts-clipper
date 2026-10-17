@@ -3,7 +3,7 @@ and the ASS file carries the word events."""
 
 import pytest
 
-from shortscut.captions import write_ass
+from shortsclipper.captions import write_ass
 
 WORDS = [{"word": "hello", "start": 0.0, "end": 0.5},
          {"word": "world", "start": 0.6, "end": 1.0}]
@@ -49,7 +49,7 @@ def test_events_present(tmp_path):
 
 def test_words_from_segments_fallback():
     """Phrase segments -> evenly-timed words, shifted to 0-based."""
-    from shortscut.captions import _words_from_segments
+    from shortsclipper.captions import _words_from_segments
     segs = [{"start": 10.0, "end": 14.0, "text": "one two three four"},
             {"start": 20.0, "end": 21.0, "text": "five"}]
     words = _words_from_segments(segs, start=10.0, end=70.0)
@@ -61,7 +61,7 @@ def test_words_from_segments_fallback():
 
 
 def test_words_from_segments_clips_to_window():
-    from shortscut.captions import _words_from_segments
+    from shortsclipper.captions import _words_from_segments
     segs = [{"start": 0.0, "end": 100.0, "text": "a b"}]
     words = _words_from_segments(segs, start=10.0, end=30.0)
     assert words[0]["start"] == 0.0 and words[-1]["end"] == 20.0

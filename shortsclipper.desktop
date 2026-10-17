@@ -1,9 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=ShortCut
+Name=Shorts Clipper
 Comment=Auto-cut vertical shorts with captions, offline
-Exec=shortscut
-Icon=shortscut
+Exec=shortsclipper
+Icon=shortsclipper
 Categories=AudioVideo;Video;
 Terminal=false
 MimeType=video/mp4;video/x-matroska;video/webm;video/quicktime;

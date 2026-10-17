@@ -1,4 +1,4 @@
-# ShortCut Linux
+# Shorts Clipper
 
 An original Linux desktop app that turns a long video into a vertical short:
 paste a video URL or drop a local video, pick **30 / 45 / 60 seconds**, drag
@@ -22,25 +22,25 @@ subscription, no usage limits.
 
 ## Quickstart
 
-**AppImage (recommended):** download `ShortCut-Linux-x86_64.AppImage` from
-[Releases](https://github.com/chinmayshastry05-cpu/shortscut-linux/releases),
+**AppImage (recommended):** download `ShortsClipper-x86_64.AppImage` from
+[Releases](https://github.com/chinmayshastry05-cpu/shorts-clipper/releases),
 make it executable, double-click it.
 
 ```bash
-chmod +x ShortCut-Linux-x86_64.AppImage
-./ShortCut-Linux-x86_64.AppImage
+chmod +x ShortsClipper-x86_64.AppImage
+./ShortsClipper-x86_64.AppImage
 ```
 
 **From source:**
 
 ```bash
-git clone https://github.com/chinmayshastry05-cpu/shortscut-linux.git
-cd shortscut-linux
+git clone https://github.com/chinmayshastry05-cpu/shorts-clipper.git
+cd shorts-clipper
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-python -m shortscut            # GUI
+python -m shortsclipper            # GUI
 # or headless:
-python -m shortscut.cli --input <URL-or-file> --duration 30 --output out.mp4
+python -m shortsclipper.cli --input <URL-or-file> --duration 30 --output out.mp4
 ```
 
 ## Requirements
@@ -58,13 +58,15 @@ python -m shortscut.cli --input <URL-or-file> --duration 30 --output out.mp4
 | Auto-cut | Speech-density sliding window | Picks the densest 30/45/60s window; ties break earliest |
 | Segment | yt-dlp `--download-sections` / ffmpeg slice | Only the chosen seconds are fetched for URLs |
 | Captions | faster-whisper (CPU, tiny), word timings | Burned via libass `.ass` at the dragged position |
-| Reframe | ffmpeg center crop + scale | 1080×1920, deterministic |
+| Reframe | ffmpeg face-anchored crop + scale | OpenCV Haar face detect, median anchor; center crop when no face |
 | Export | ffmpeg H.264 + AAC | `+faststart` for instant playback |
 
-## Honest limits (v0.1)
+## Honest limits (v0.2)
 
-- **Reframe is a center crop**, not face-tracked. If the speaker is off-center,
-  the crop may cut them. The preview shows exactly what you get.
+- **Face tracking is one static anchor**, not per-frame tracking. The speaker's
+  median face position across the short sets a single crop window. If the
+  speaker moves around a lot, the median wins; if no face is found, the crop
+  falls back to center. The preview shows exactly what you get.
 - **YouTube may show a bot-check** ("Sign in to confirm you're not a bot") to
   datacenter / VPN IPs. On a normal home connection yt-dlp works; on a
   datacenter IP, paste a direct video link instead.
@@ -87,7 +89,7 @@ branding here are original.
 
 ## Not affiliated
 
-ShortCut Linux is an independent, original project. It is **not affiliated
+Shorts Clipper is an independent, original project. It is **not affiliated
 with, endorsed by, or a port of** Mani Clips or any other commercial clipper.
 All code, UI text, and branding in this repo are original.
 
