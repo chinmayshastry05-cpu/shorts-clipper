@@ -50,10 +50,23 @@ def prepare(source, duration, whisper_model=config.DEFAULT_WHISPER, progress=Non
     if face_track:
         if progress:
             progress("Finding the speaker…")
-        face_x = editing.detect_face_center_x(seg)
-        log.info("face anchor: %s", f"{face_x:.3f}" if face_x is not None else "none — center crop")
+        face_runs, two_shot = editing.detect_face_track(seg)
+        if face_runs:
+            # Preview anchor: duration-weighted median of the run anchors.
+            face_x = sorted(r[2] for r in face_runs)[len(face_runs) // 2]
+        else:
+            face_x = editing.detect_face_center_x(seg)
+        log.info("face anchor: %s (%d run(s), two_shot=%s)",
+                 f"{face_x:.3f}" if face_x is not None else "none — center crop",
+                 len(face_runs), two_shot)
+        if two_shot:
+            msg = ("Two-shot scene detected — the crop follows the dominant "
+                   "speaker; the other person may be cropped out.")
+            log.warning(msg)
+            if progress:
+                progress(msg)
     else:
-        face_x = None
+        face_runs, two_shot, face_x = [], False, None
 
     if progress:
         progress("Timing captions…")
@@ -72,6 +85,7 @@ def prepare(source, duration, whisper_model=config.DEFAULT_WHISPER, progress=Non
         "method": method, "start": start, "end": end, "words": words,
         "nwords": nwords, "segment": str(seg), "frame": str(frame),
         "duration": end - start, "face_x": face_x,
+        "face_runs": face_runs, "two_shot": two_shot,
     }
 
 
@@ -96,7 +110,14 @@ def render_short(prep, caption_y=config.DEFAULT_CAPTION_Y,
         n_events = captions.write_ass(prep["words"], seg_dur, out_w, out_h,
                                       ass_path, caption_style, caption_script,
                                       caption_y=caption_y)
-        export.render(prep["segment"], out.parent, out.name, vf, ass_path.name)
+        face_runs = prep.get("face_runs") or []
+        if len(face_runs) > 1:
+            # Cut-heavy / two-shot segment: re-anchor the crop per run
+            # instead of holding one static anchor for the whole clip.
+            export.render_tracked(prep["segment"], out.parent, out.name,
+                                  face_runs, ass_path.name)
+        else:
+            export.render(prep["segment"], out.parent, out.name, vf, ass_path.name)
         if not keep_ass:
             ass_path.unlink(missing_ok=True)
     return {
@@ -104,7 +125,7 @@ def render_short(prep, caption_y=config.DEFAULT_CAPTION_Y,
         "duration": round(ffprobe_duration(out), 2) if out.exists() else None,
         "width": config.OUT_W, "height": config.OUT_H,
         "caption_events": None, "caption_y": caption_y,
-        "source": prep["source"],
+        "source": prep["source"], "two_shot": prep.get("two_shot", False),
     }
 
 

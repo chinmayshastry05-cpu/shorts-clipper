@@ -13,7 +13,7 @@ import re
 import tempfile
 from pathlib import Path
 
-from . import config, whisper_engine
+from . import config, hinglish, whisper_engine
 from .logutil import get_logger
 from .util import extract_wav16k, source_key
 
@@ -107,29 +107,9 @@ def _group_words(words, max_words, max_gap):
     return lines
 
 
-_IAST_HINGLISH = [("ā", "aa"), ("ī", "i"), ("ū", "u"), ("ṃ", "n"), ("ṁ", "n"),
-                  ("ṅ", "ng"), ("ñ", "ny"), ("ṇ", "n"), ("ṭh", "th"), ("ṭ", "t"),
-                  ("ḍh", "dh"), ("ḍ", "d"), ("ṛ", "r"), ("ś", "sh"), ("ṣ", "sh"),
-                  ("ḥ", ""), ("ē", "e"), ("ō", "o")]
-_DEVANAGARI = re.compile(r"[ऀ-ॿ]")
-
-
-def to_hinglish(word):
-    """Romanize a Devanagari word to readable Hinglish. Latin words pass through."""
-    if not _DEVANAGARI.search(word):
-        return word
-    try:
-        from indic_transliteration import sanscript
-        from indic_transliteration.sanscript import transliterate
-    except Exception:
-        return word
-    s = transliterate(word, sanscript.DEVANAGARI, sanscript.IAST)
-    for a, b in _IAST_HINGLISH:
-        s = s.replace(a, b)
-    s = s.replace("~", "n")
-    s = re.sub(r"[^\x00-\x7fA-Za-z']", "", s).lower()
-    s = re.sub(r"([bcdfghjklmnpqrstvwxyz])a$", r"\1", s)
-    return s or word
+# Backwards-compatible alias; the implementation (loanword lexicon +
+# phonetic scheme + loud missing-dep failure) lives in hinglish.py.
+to_hinglish = hinglish.to_hinglish
 
 
 def write_ass(words, seg_duration, play_w, play_h, path,
@@ -143,6 +123,12 @@ def write_ass(words, seg_duration, play_w, play_h, path,
     value. Applied as the ASS bottom margin: margin_v = (1 - caption_y) * height.
     """
     caption_y = min(1.0, max(0.0, float(caption_y)))
+    if script == "hinglish":
+        # Fail loudly BEFORE rendering: v0.2.0's AppImage silently shipped
+        # Devanagari captions for --caption-script hinglish because the
+        # transliteration dep was missing and to_hinglish swallowed the
+        # ImportError. Never again.
+        hinglish.require_hinglish()
     local = []
     for w in words:
         s, e = max(0.0, w["start"]), min(seg_duration, w["end"])
