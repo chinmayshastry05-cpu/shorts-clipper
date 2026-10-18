@@ -1,9 +1,11 @@
 # Shorts Clipper
 
-**Demo (18s): [assets/demo-v0.3.1.mp4](assets/demo-v0.3.1.mp4)** — the v0.3.1 release build, end to end:
-load a video, captions + speaker crop run locally, drag the caption, download the short.
+**Demo (18s)** — the v0.3.1 release build, end to end: load a video, captions +
+speaker crop run locally, drag the caption, download the short.
 
-https://github.com/user-attachments/assets/demo-v0.3.1.mp4
+<video src="https://github.com/chinmayshastry05-cpu/shorts-clipper/raw/main/assets/demo-v0.3.1.mp4" controls width="720"></video>
+
+([direct mp4 link](assets/demo-v0.3.1.mp4))
 
 An original Linux desktop app that turns a long video into a vertical short:
 paste a video URL or drop a local video, pick **30 / 45 / 60 seconds**, drag
