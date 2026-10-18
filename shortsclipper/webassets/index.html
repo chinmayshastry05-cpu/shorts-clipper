@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shorts Clipper — vertical shorts, offline</title>
+<style>
+/* ---------- Magic UI-style theme ---------- */
+:root, [data-theme="dark"] {
+  --bg: #09090b; --card: #101013; --card2: #0c0c0e; --border: #212126;
+  --text: #fafafa; --muted: #a1a1aa; --faint: #63636b;
+  --gold: #ffb224; --gold2: #f59e0b; --gold-soft: rgba(255,178,36,.14);
+  --gold-text: #221600; --entry: #0e0e11; --term: #0a0a0c;
+  --dot: rgba(255,255,255,.06);
+}
+[data-theme="light"] {
+  --bg: #fafaf8; --card: #ffffff; --card2: #f6f5f1; --border: #e6e4dc;
+  --text: #18181b; --muted: #71717a; --faint: #a1a1aa;
+  --gold: #d97706; --gold2: #b45309; --gold-soft: rgba(217,119,6,.12);
+  --gold-text: #ffffff; --entry: #ffffff; --term: #0a0a0c;
+  --dot: rgba(0,0,0,.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+/* dot pattern, fading downward (Magic UI DotPattern) */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(circle, var(--dot) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 30%, transparent 75%);
+}
+/* soft gold glow at top */
+body::after {
+  content: ""; position: fixed; top: -180px; left: 50%; transform: translateX(-50%);
+  width: 720px; height: 340px; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse, var(--gold-soft), transparent 70%);
+}
+.wrap { position: relative; z-index: 1; max-width: 1060px; margin: 0 auto; padding: 22px 26px 30px; }
+
+/* ---------- header ---------- */
+header { display: flex; align-items: center; gap: 12px; padding-bottom: 18px;
+  border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.wordmark { font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+.wordmark .g { color: var(--gold); }
+.tagline { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.spacer { flex: 1; }
+.badge { font-size: 11.5px; color: var(--muted); border: 1px solid var(--border);
+  border-radius: 999px; padding: 3px 10px; background: var(--card); }
+.tbtn { border: 1px solid var(--border); background: var(--card); color: var(--text);
+  border-radius: 999px; padding: 6px 14px; font-size: 12.5px; cursor: pointer;
+  font-family: inherit; transition: border-color .15s; }
+.tbtn:hover { border-color: var(--gold); }
+
+/* ---------- layout ---------- */
+.cols { display: grid; grid-template-columns: 1fr 322px; gap: 18px; align-items: start; }
+
+/* ---------- cards (bento) ---------- */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 16px 18px; margin-bottom: 14px; }
+.card h2 { font-size: 13px; font-weight: 700; letter-spacing: .2px; margin-bottom: 10px; }
+.card h2 .n { color: var(--gold); font-weight: 800; margin-right: 6px; }
+.hint { color: var(--muted); font-size: 11.5px; }
+
+/* ---------- source row ---------- */
+.urlrow { display: flex; gap: 8px; }
+input[type=text] {
+  flex: 1; height: 42px; border-radius: 11px; border: 1px solid var(--border);
+  background: var(--entry); color: var(--text); padding: 0 14px; font-size: 13px;
+  font-family: inherit; outline: none; transition: border-color .15s, box-shadow .15s;
+}
+input[type=text]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+input[type=text]::placeholder { color: var(--faint); }
+.btn { height: 42px; border-radius: 11px; border: none; padding: 0 18px; font-size: 13px;
+  font-weight: 700; cursor: pointer; font-family: inherit; transition: filter .15s, transform .05s; }
+.btn:active { transform: scale(.98); }
+.btn-gold { position: relative; overflow: hidden; color: var(--gold-text);
+  background: linear-gradient(110deg, var(--gold2), var(--gold) 45%, var(--gold2));
+  background-size: 200% 100%; box-shadow: 0 4px 18px -4px var(--gold-soft), 0 0 0 1px rgba(0,0,0,.15) inset; }
+.btn-gold:hover { filter: brightness(1.07); }
+.btn-gold::after { /* Magic UI shimmer sweep */
+  content: ""; position: absolute; top: -40%; bottom: -40%; width: 34px;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
+  left: -60px; transform: skewX(-18deg); animation: shimmer 2.8s ease-in-out infinite;
+}
+@keyframes shimmer { 0%,55% { left: -60px; } 90%,100% { left: calc(100% + 60px); } }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); font-weight: 600; }
+.btn-outline:hover { border-color: var(--gold); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; filter: none; }
+.btn[disabled]::after { display: none; }
+.divider { display: flex; align-items: center; gap: 10px; color: var(--faint);
+  font-size: 11.5px; margin: 12px 0; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.filerow { display: flex; align-items: center; gap: 12px; }
+#filepick { display: none; }
+
+/* ---------- segmented control ---------- */
+.seg { display: inline-flex; background: var(--entry); border: 1px solid var(--border);
+  border-radius: 11px; padding: 3px; gap: 2px; }
+.seg button { border: none; background: transparent; color: var(--muted); font-family: inherit;
+  font-size: 12.5px; font-weight: 600; padding: 7px 16px; border-radius: 8px; cursor: pointer;
+  transition: color .12s; }
+.seg button:hover { color: var(--text); }
+.seg button.on { background: linear-gradient(110deg, var(--gold2), var(--gold)); color: var(--gold-text); }
+.caprow { display: flex; gap: 26px; flex-wrap: wrap; }
+.capcol .hint { margin-bottom: 6px; }
+
+/* ---------- export row ---------- */
+.exportrow { display: flex; gap: 10px; align-items: center; }
+.status { margin-top: 10px; font-size: 12px; color: var(--muted); min-height: 16px; }
+.status.working { color: var(--gold); }
+.capread { margin-top: 4px; font-size: 11.5px; color: var(--faint); }
+
+/* ---------- terminal ---------- */
+.term { background: var(--term); border: 1px solid var(--border); border-radius: 16px;
+  padding: 12px 14px; }
+.term .thead { color: #71717a; font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .4px; margin-bottom: 6px; }
+.term .tbody { font: 12px/1.65 ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", monospace;
+  color: #b4b4bc; height: 118px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+.term .tbody .p { color: var(--gold); }
+.term .tbody::-webkit-scrollbar { width: 8px; }
+.term .tbody::-webkit-scrollbar-thumb { background: #26262b; border-radius: 4px; }
+
+/* ---------- phone preview + border beam ---------- */
+.phonewrap { position: sticky; top: 18px; }
+.beam { position: relative; border-radius: 30px; padding: 1.5px; overflow: hidden; }
+.beam::before { content: ""; position: absolute; inset: -150%;
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, var(--gold) 330deg, #ffe1a1 345deg, var(--gold) 360deg);
+  animation: beam 4.5s linear infinite; }
+@keyframes beam { to { transform: rotate(360deg); } }
+.phoneinner { position: relative; background: var(--card); border-radius: 28.5px; padding: 13px; }
+.phoneinner .notch { position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+  width: 74px; height: 16px; background: rgba(0,0,0,.55); border-radius: 999px; z-index: 3; }
+.screen { position: relative; width: 270px; height: 480px; border-radius: 18px; overflow: hidden;
+  background: var(--card2); margin: 0 auto; }
+.screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.screen .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--faint); font-size: 13px; text-align: center; line-height: 1.6; padding: 0 22px; }
+#cappill { position: absolute; left: 50%; transform: translate(-50%, -50%); max-width: 244px;
+  background: rgba(0,0,0,.85); color: #fff; font-weight: 800; font-size: 14.5px; text-align: center;
+  padding: 5px 12px; border-radius: 9px; cursor: grab; user-select: none; z-index: 4;
+  box-shadow: 0 0 0 1.5px var(--gold); white-space: pre-line; display: none; }
+#cappill:active { cursor: grabbing; }
+.ptitle { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+
+/* ---------- drop overlay ---------- */
+#dropov { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
+  background: rgba(9,9,11,.82); backdrop-filter: blur(3px); }
+#dropov .box { border: 2px dashed var(--gold); border-radius: 20px; padding: 46px 70px;
+  font-size: 17px; font-weight: 700; color: var(--gold); }
+footer { margin-top: 18px; display: flex; justify-content: space-between; color: var(--faint); font-size: 11.5px; }
+footer a { color: var(--faint); cursor: pointer; text-decoration: none; }
+footer a:hover { color: var(--gold); }
+@media (max-width: 940px) { .cols { grid-template-columns: 1fr; } .phonewrap { position: static; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="wordmark"><span class="g">Shorts</span> Clipper</div>
+      <div class="tagline">vertical shorts, offline — no cloud, no limits</div>
+    </div>
+    <div class="spacer"></div>
+    <span class="badge">v{{VERSION}}</span>
+    <button class="tbtn" id="themebtn">Light mode</button>
+  </header>
+
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h2><span class="n">01</span>Source</h2>
+        <div class="urlrow">
+          <input type="text" id="url" placeholder="Paste a video URL — YouTube or direct link…" spellcheck="false">
+          <button class="btn btn-gold" id="loadbtn">Load</button>
+        </div>
+        <div class="divider">or</div>
+        <div class="filerow">
+          <button class="btn btn-outline" id="browsebtn" style="height:38px">Browse files</button>
+          <span class="hint">or drop a video anywhere on this page — mp4 · mov · mkv · webm</span>
+          <input type="file" id="filepick" accept="video/*,.mkv">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">02</span>Short length</h2>
+        <div class="seg" id="durseg">
+          <button data-v="30" class="on">30s</button><button data-v="45">45s</button><button data-v="60">60s</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">03</span>Captions</h2>
+        <div class="caprow">
+          <div class="capcol">
+            <div class="hint">Style</div>
+            <div class="seg" id="styleseg">
+              <button data-v="cinematic" class="on">Cinematic</button><button data-v="karaoke">Karaoke</button>
+            </div>
+          </div>
+          <div class="capcol">
+            <div class="hint">Script</div>
+            <div class="seg" id="scriptseg">
+              <button data-v="native" class="on">Native</button><button data-v="hinglish">Hinglish</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">04</span>Export</h2>
+        <div class="exportrow">
+          <button class="btn btn-outline" id="previewbtn" style="height:44px">Preview</button>
+          <button class="btn btn-gold" id="dlbtn" style="height:44px;padding:0 26px">Download short&nbsp;&nbsp;↓</button>
+        </div>
+        <div class="status" id="status">Ready — paste a URL or drop a video.</div>
+        <div class="capread" id="capread">Caption: 72% from top — drag it on the phone.</div>
+      </div>
+
+      <div class="term">
+        <div class="thead">&gt;_ terminal</div>
+        <div class="tbody" id="log"></div>
+      </div>
+    </div>
+
+    <div class="phonewrap">
+      <div class="ptitle">Phone preview</div>
+      <div class="hint" style="margin-bottom:10px">Drag the caption to move it.</div>
+      <div class="beam"><div class="phoneinner">
+        <div class="notch"></div>
+        <div class="screen" id="screen">
+          <div class="empty" id="empty">Your video<br>preview appears here</div>
+          <img id="frame" alt="" style="display:none">
+          <div id="cappill" style="top:72%"></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Everything runs on your machine — nothing is uploaded.</span>
+    <a id="quitlink">quit</a>
+  </footer>
+</div>
+
+<div id="dropov"><div class="box">Drop your video to load it</div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const S = { source:"", duration:30, style:"cinematic", script:"native",
+            captionY:0.72, prepJob:null, busy:false, loaded:false };
+
+/* theme */
+const themebtn = $("themebtn");
+function setTheme(t){ document.documentElement.dataset.theme = t;
+  themebtn.textContent = t === "dark" ? "Light mode" : "Dark mode";
+  localStorage.setItem("sc-theme", t); }
+themebtn.onclick = () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+const qpTheme = new URLSearchParams(location.search).get("theme");
+setTheme(qpTheme || localStorage.getItem("sc-theme") || "dark");
+
+/* log */
+function logline(msg, isErr){
+  const d = document.createElement("div");
+  d.innerHTML = '<span class="p">&gt;</span> ' + (isErr ? "" : "") ;
+  d.appendChild(document.createTextNode(msg));
+  if (isErr) d.style.color = "#f87171";
+  $("log").appendChild(d); $("log").scrollTop = $("log").scrollHeight;
+}
+logline("shorts clipper v{{VERSION}} — ready");
+
+function setStatus(msg, working){
+  $("status").textContent = msg;
+  $("status").className = "status" + (working ? " working" : "");
+}
+function setBusy(b){
+  S.busy = b;
+  for (const id of ["loadbtn","previewbtn","dlbtn","browsebtn"]) $(id).disabled = b;
+}
+
+/* segmented controls */
+function seg(id, cb){
+  $(id).querySelectorAll("button").forEach(b => b.onclick = () => {
+    $(id).querySelectorAll("button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on"); cb(b.dataset.v);
+  });
+}
+seg("durseg", v => { S.duration = +v; S.prepJob = null; });
+seg("styleseg", v => { S.style = v; drawCaption(); });
+seg("scriptseg", v => { S.script = v; });
+
+/* caption pill */
+const pill = $("cappill");
+function drawCaption(){
+  if (!S.loaded) return;
+  pill.textContent = (S.style === "cinematic" ? S.lines.cinematic : S.lines.karaoke) || "";
+  pill.style.top = (S.captionY * 100) + "%";
+  pill.style.display = "block";
+  $("capread").textContent = "Caption: " + Math.round(S.captionY * 100) + "% from top — drag it on the phone.";
+}
+let drag = null;
+pill.addEventListener("pointerdown", e => { drag = { y: e.clientY }; pill.setPointerCapture(e.pointerId); });
+pill.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const r = $("screen").getBoundingClientRect();
+  S.captionY = Math.min(.95, Math.max(.05, (e.clientY - r.top) / r.height));
+  pill.style.top = (S.captionY * 100) + "%";
+});
+pill.addEventListener("pointerup", () => {
+  drag = null; drawCaption();
+  logline("caption moved to " + Math.round(S.captionY * 100) + "% from top");
+});
+
+/* job polling */
+async function poll(id, onDone){
+  for (;;) {
+    await new Promise(r => setTimeout(r, 600));
+    let j;
+    try { j = await (await fetch("/api/jobs/" + id)).json(); }
+    catch (e) { continue; }
+    if (j.progress && j.progress.length) {
+      const seen = poll.seen[id] || 0;
+      for (const p of j.progress.slice(seen)) logline(p);
+      poll.seen[id] = j.progress.length;
+    }
+    if (j.status === "done") return onDone(j.result);
+    if (j.status === "error") {
+      setBusy(false); setStatus("Error: " + j.error, false); logline("ERROR: " + j.error, true);
+      return;
+    }
+  }
+}
+poll.seen = {};
+
+/* prepare (preview) */
+async function prepare(){
+  const src = S.source.trim();
+  if (!src) { setStatus("Paste a video URL or pick a local file first.", false); return; }
+  setBusy(true); setStatus("Getting transcript…", true);
+  const r = await (await fetch("/api/prepare", { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source: src, duration: S.duration }) })).json();
+  if (r.error) { setBusy(false); setStatus("Error: " + r.error, false); logline("ERROR: " + r.error, true); return; }
+  S.prepJob = r.job;
+  poll(r.job, res => {
+    S.loaded = true; S.lines = res.lines; S.prepJob = r.job;
+    $("empty").style.display = "none";
+    const img = $("frame");
+    img.src = "/api/jobs/" + r.job + "/frame.jpg?x=" + Date.now();
+    img.style.display = "block";
+    drawCaption();
+    setBusy(false);
+    setStatus(`Ready — ${Math.round(res.duration)}s window at ${res.start.toFixed(1)}–${res.end.toFixed(1)}s (${res.nwords} words). Drag the caption, then Download short.`, false);
+  });
+}
+$("loadbtn").onclick = prepare;
+$("previewbtn").onclick = prepare;
+$("url").addEventListener("keydown", e => { if (e.key === "Enter") prepare(); });
+$("url").addEventListener("input", e => { S.source = e.target.value; });
+
+/* render + download */
+$("dlbtn").onclick = async () => {
+  const src = S.source.trim();
+  if (!src) { setStatus("Paste a video URL or pick a local file first.", false); return; }
+  setBusy(true); setStatus("Burning captions + rendering…", true);
+  const r = await (await fetch("/api/render", { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source: src, duration: S.duration, caption_y: S.captionY,
+                           style: S.style, script: S.script }) })).json();
+  if (r.error) { setBusy(false); setStatus("Error: " + r.error, false); logline("ERROR: " + r.error, true); return; }
+  poll(r.job, res => {
+    setBusy(false);
+    setStatus("Saved — " + res.name + " is in your downloads.", false);
+    logline("saved " + res.name);
+    const a = document.createElement("a");
+    a.href = "/api/jobs/" + r.job + "/download"; a.download = res.name;
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+};
+
+/* file pick + drag-drop upload */
+async function upload(file){
+  if (!file) return;
+  setBusy(true); setStatus("Uploading " + file.name + "…", true);
+  const fd = new FormData(); fd.append("file", file, file.name);
+  const r = await (await fetch("/api/upload", { method: "POST", body: fd })).json();
+  setBusy(false);
+  if (r.error) { setStatus("Error: " + r.error, false); return; }
+  S.source = r.source; $("url").value = r.source;
+  logline("loaded local file " + file.name);
+  prepare();
+}
+$("browsebtn").onclick = () => $("filepick").click();
+$("filepick").addEventListener("change", e => upload(e.target.files[0]));
+let dragN = 0;
+window.addEventListener("dragenter", e => { e.preventDefault(); if (++dragN === 1) $("dropov").style.display = "flex"; });
+window.addEventListener("dragleave", e => { e.preventDefault(); if (--dragN <= 0) { dragN = 0; $("dropov").style.display = "none"; } });
+window.addEventListener("dragover", e => e.preventDefault());
+window.addEventListener("drop", e => { e.preventDefault(); dragN = 0; $("dropov").style.display = "none";
+  if (e.dataTransfer.files.length) upload(e.dataTransfer.files[0]); });
+
+/* deep link: ?source=<url-or-path> auto-loads */
+const qpSrc = new URLSearchParams(location.search).get("source");
+if (qpSrc) { S.source = qpSrc; $("url").value = qpSrc; prepare(); }
+
+/* heartbeat + quit */
+setInterval(() => fetch("/api/heartbeat").catch(() => {}), 5000);
+$("quitlink").onclick = async () => { await fetch("/api/shutdown", { method: "POST" });
+  document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;color:#a1a1aa;font-family:system-ui">Shorts Clipper has quit — you can close this tab.</div>'; };
+</script>
+</body>
+</html>

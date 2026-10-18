@@ -45,7 +45,6 @@ PYBIN="$(find "$APPDIR/usr/python" -name "python3.12" -type f | head -n 1)"
 [ -n "$PYBIN" ] || { echo "ERROR: no python3.12 found in $APPDIR/usr/python"; exit 1; }
 PYREL="${PYBIN#$APPDIR/}"
 echo "== python: $PYREL"
-"$PYBIN" -c "import tkinter" || { echo "ERROR: this Python has no tkinter (GUI needs it)"; exit 1; }
 
 # ---- pip deps into AppDir (no venv — AppRun sets PYTHONPATH) ----
 # --only-binary: a missing wheel must fail loudly, not silently fall back

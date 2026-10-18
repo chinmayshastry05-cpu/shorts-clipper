@@ -1,6 +1,6 @@
-"""Entry point: `python -m shortsclipper` launches the desktop GUI."""
+"""Entry point: `python -m shortsclipper` launches the desktop (web) UI."""
 
-from .gui import main
+from .webui import main
 
 if __name__ == "__main__":
     main()

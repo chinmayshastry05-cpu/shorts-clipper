@@ -9,7 +9,8 @@ av==14.0.0                   # PyAV for faster-whisper audio decode; pinned exac
 yt-dlp>=2024.0.0             # video/audio download (generic URLs + YouTube)
 youtube-transcript-api>=1.0.0  # YouTube captions without downloading video
 Pillow>=10.0.0                # preview frame handling in the GUI
-tkinterdnd2>=0.3.0            # drag-and-drop of local files into the GUI (optional)
+# (v0.3.0: tkinterdnd2 dropped — the UI is now a local web app; the browser
+#  handles drag-and-drop natively. No GUI toolkit needed at all.)
 opencv-python-headless>=4.8,<5  # face detection for the face-anchored crop (headless: no GUI libs); <5: 5.x dropped cv2.CascadeClassifier
 indic-transliteration>=2.3  # Devanagari -> Hinglish romanization for
                              # --caption-script hinglish (missing in v0.2.0,

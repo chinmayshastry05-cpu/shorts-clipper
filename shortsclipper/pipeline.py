@@ -74,7 +74,7 @@ def prepare(source, duration, whisper_model=config.DEFAULT_WHISPER, progress=Non
     # window, in case the segment's own transcription yields no words.
     fallback = [s for s in segments if s["end"] > start and s["start"] < end]
     words = captions.segment_words(seg, source, start, end, whisper_model,
-                                   fallback_segments=fallback)
+                                   fallback_segments=fallback, language=language)
     whisper_engine.free_model()
 
     # Preview frame: middle of the segment.
@@ -99,10 +99,24 @@ def render_short(prep, caption_y=config.DEFAULT_CAPTION_Y,
         out = config.DEFAULT_OUTPUT / f"shortsclipper_{prep['key']}_{int(prep['start'])}-{int(prep['end'])}.mp4"
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists() and not force:
-        log.info("output already exists (%s) — reusing", out.name)
-    else:
+        # A previous run may have been interrupted mid-render — only reuse
+        # the file if it is a valid, non-empty, probe-able mp4.
+        try:
+            reusable = out.stat().st_size > 0 and ffprobe_duration(out) > 0
+        except Exception:
+            reusable = False
+        if reusable:
+            log.info("output already exists (%s) — reusing", out.name)
+        else:
+            log.warning("existing output is corrupt (%s) — re-rendering", out.name)
+            out.unlink(missing_ok=True)
+    if not out.exists() or force:
         if progress:
             progress("Burning captions + rendering…")
+        # Render to a temp name and move into place: an interrupted render
+        # never leaves a half-written file at the final path.
+        tmp_name = f"{out.stem}.part{out.suffix}"
+        (out.parent / tmp_name).unlink(missing_ok=True)
         seg_dur = ffprobe_duration(prep["segment"])
         out_w, out_h, vf = editing.vertical_filters(
             prep["segment"], vertical=True, face_x=prep.get("face_x"))
@@ -114,10 +128,12 @@ def render_short(prep, caption_y=config.DEFAULT_CAPTION_Y,
         if len(face_runs) > 1:
             # Cut-heavy / two-shot segment: re-anchor the crop per run
             # instead of holding one static anchor for the whole clip.
-            export.render_tracked(prep["segment"], out.parent, out.name,
+            export.render_tracked(prep["segment"], out.parent, tmp_name,
                                   face_runs, ass_path.name)
         else:
-            export.render(prep["segment"], out.parent, out.name, vf, ass_path.name)
+            export.render(prep["segment"], out.parent, tmp_name, vf, ass_path.name)
+        import os
+        os.replace(out.parent / tmp_name, out)
         if not keep_ass:
             ass_path.unlink(missing_ok=True)
     return {

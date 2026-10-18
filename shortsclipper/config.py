@@ -19,9 +19,12 @@ SEGWORDS_CACHE = CACHE_DIR / "segwords"           # <id>_<start>-<end>.json
 
 DEFAULT_OUTPUT = Path.home() / "Downloads"
 
-# Whisper (faster-whisper, CPU). "tiny" is ~75 MB on first run and fast
-# enough on a 2-core VM; bump to "base"/"small" for better accuracy.
-DEFAULT_WHISPER = "tiny"
+# Whisper (faster-whisper, CPU). "small" (~460 MB, downloaded once on first
+# use) is the default: "tiny" crashed on Hindi word alignment and "base"
+# mis-detected Hinglish as Urdu (Arabic-script captions); "small" is the
+# smallest model that transcribes Hinglish/Hindi correctly (proper
+# Devanagari) — and it is noticeably better on English too.
+DEFAULT_WHISPER = "small"
 
 # Output video
 OUT_W, OUT_H = 1080, 1920           # 9:16

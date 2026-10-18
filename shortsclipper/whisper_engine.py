@@ -29,14 +29,19 @@ def get_model(size):
     return _model
 
 
-def transcribe(wav_path, size, word_timestamps):
+def transcribe(wav_path, size, word_timestamps, language=None):
     """Transcribe a wav. Returns (segments, words, language).
 
     segments: [{start,end,text}]; words: [{start,end,word}] (empty if not requested).
+    language: BCP-47 code to force (e.g. "hi"); None = autodetect. Short
+    clips SHOULD pass the language detected on the full audio — on a 30 s
+    Hinglish segment autodetect alone can land on the wrong language (Urdu
+    instead of Hindi) and produce wrong-script captions.
     """
     model = get_model(size)
     seg_iter, info = model.transcribe(
-        str(wav_path), word_timestamps=word_timestamps, vad_filter=True)
+        str(wav_path), word_timestamps=word_timestamps, vad_filter=True,
+        language=language)
     segments, words = [], []
     for s in seg_iter:  # generator — iterate to actually run inference
         segments.append({"start": s.start, "end": s.end, "text": (s.text or "").strip()})

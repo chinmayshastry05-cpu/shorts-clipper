@@ -46,14 +46,17 @@ def _words_from_segments(segments, start, end):
 
 
 def segment_words(segment_path, source, start, end,
-                  whisper_model=config.DEFAULT_WHISPER, fallback_segments=None):
+                  whisper_model=config.DEFAULT_WHISPER, fallback_segments=None,
+                  language=None):
     """Word-level timings for one segment (0-based). Cached by source+range.
 
     fallback_segments: phrase-level transcript segments (absolute time) for
     this window, used only when the segment's own transcription yields no
     words (see _words_from_segments).
+    language: force this language for the segment pass — pass the language
+    detected on the full audio so a short clip is not mis-detected.
     """
-    key = f"{source_key(source)}_{start:07.2f}-{end:07.2f}"
+    key = f"{source_key(source)}_{start:07.2f}-{end:07.2f}_{language or 'auto'}"
     cache = config.SEGWORDS_CACHE / f"{key}.json"
     if cache.exists():
         log.info("cache HIT — segment words (%s)", cache.name)
@@ -62,7 +65,14 @@ def segment_words(segment_path, source, start, end,
     workdir = Path(tempfile.mkdtemp(prefix="shortsclipper_segw_"))
     try:
         wav = extract_wav16k(segment_path, workdir / "seg.wav")
-        _, words, _ = whisper_engine.transcribe(wav, whisper_model, word_timestamps=True)
+        try:
+            _, words, _ = whisper_engine.transcribe(
+                wav, whisper_model, word_timestamps=True, language=language)
+        except Exception as e:
+            # faster-whisper's word alignment can hard-crash on some audio
+            # (tiny model, noisy speech) — fall back to phrase timing below.
+            log.warning("segment word transcription failed (%s) — using phrase fallback", e)
+            words = []
     finally:
         import shutil
         shutil.rmtree(workdir, ignore_errors=True)
@@ -146,13 +156,13 @@ def write_ass(words, seg_duration, play_w, play_h, path,
     font = config.CAPTION_FONT
     if cinematic:
         fs = int(play_h * 0.062)
-        outline, shadow = 6, 4
+        outline, shadow = 9, 6   # thick dark outline: white text on bright frames
         lines = _group_words(local, max_words=3, max_gap=0.7)
         active = r"{\c&H2FE8FF&\b1\fscx112\fscy112}"
         idle = r"{\c&HFFFFFF&\b1\fscx100\fscy100}"
     else:
         fs = max(48, int(play_h * 0.05))
-        outline, shadow = 5, 3
+        outline, shadow = 7, 5
         lines = _group_words(local, max_words=5, max_gap=0.8)
         active = r"{\c&H00E6FF&\b1}"
         idle = r"{\c&HFFFFFF&\b0}"
