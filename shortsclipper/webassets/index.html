@@ -140,7 +140,8 @@ input[type=text]::placeholder { color: var(--faint); }
   width: 74px; height: 16px; background: rgba(0,0,0,.55); border-radius: 999px; z-index: 3; }
 .screen { position: relative; width: 270px; height: 480px; border-radius: 18px; overflow: hidden;
   background: var(--card2); margin: 0 auto; }
-.screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.screen img { width: 100%; height: 100%; object-fit: cover; display: block;
+  -webkit-user-drag: none; user-select: none; pointer-events: none; }
 .screen .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   color: var(--faint); font-size: 13px; text-align: center; line-height: 1.6; padding: 0 22px; }
 #cappill { position: absolute; left: 50%; transform: translate(-50%, -50%); max-width: 244px;
@@ -237,7 +238,7 @@ footer a:hover { color: var(--gold); }
         <div class="notch"></div>
         <div class="screen" id="screen">
           <div class="empty" id="empty">Your video<br>preview appears here</div>
-          <img id="frame" alt="" style="display:none">
+          <img id="frame" alt="" draggable="false" style="display:none">
           <div id="cappill" style="top:72%"></div>
         </div>
       </div></div>
@@ -403,8 +404,14 @@ let dragN = 0;
 window.addEventListener("dragenter", e => { e.preventDefault(); if (++dragN === 1) $("dropov").style.display = "flex"; });
 window.addEventListener("dragleave", e => { e.preventDefault(); if (--dragN <= 0) { dragN = 0; $("dropov").style.display = "none"; } });
 window.addEventListener("dragover", e => e.preventDefault());
+function looksVideo(f){
+  if (!f) return false;
+  if (f.type && f.type.startsWith("video/")) return true;
+  return /\.(mp4|mov|mkv|webm|avi|m4v)$/i.test(f.name || "");
+}
 window.addEventListener("drop", e => { e.preventDefault(); dragN = 0; $("dropov").style.display = "none";
-  if (e.dataTransfer.files.length) upload(e.dataTransfer.files[0]); });
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (looksVideo(f)) upload(f); });
 
 /* deep link: ?source=<url-or-path> auto-loads */
 const qpSrc = new URLSearchParams(location.search).get("source");
